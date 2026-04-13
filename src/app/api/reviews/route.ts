@@ -5,6 +5,8 @@ import { maskName } from "@/lib/utils";
 export async function GET(request: NextRequest) {
   const { searchParams } = new URL(request.url);
   const bookId = searchParams.get("bookId");
+  const cursor = searchParams.get("cursor");
+  const limit = Math.min(Number(searchParams.get("limit")) || 20, 50);
 
   if (!bookId) {
     return NextResponse.json({ error: "bookId is required" }, { status: 400 });
@@ -12,25 +14,45 @@ export async function GET(request: NextRequest) {
 
   const supabase = await createClient();
 
-  const { data, error } = await supabase
+  let query = supabase
     .from("reviews")
     .select("*, user:users(id, name)")
     .eq("book_id", bookId)
-    .order("created_at", { ascending: false });
+    .order("created_at", { ascending: false })
+    .limit(limit + 1);
+
+  if (cursor) {
+    query = query.lt("created_at", cursor);
+  }
+
+  const { data, error } = await query;
 
   if (error) {
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
 
+  const hasMore = data && data.length > limit;
+  const sliced = hasMore ? data.slice(0, limit) : (data || []);
+
   // Mask reviewer names
-  const reviews = (data || []).map((review) => ({
+  const reviews = sliced.map((review) => ({
     ...review,
     user: review.user
       ? { ...review.user, name: maskName(review.user.name) }
       : null,
   }));
 
-  return NextResponse.json({ reviews });
+  const nextCursor =
+    hasMore && reviews.length > 0
+      ? reviews[reviews.length - 1].created_at
+      : null;
+
+  const response = NextResponse.json({ reviews, nextCursor });
+  response.headers.set(
+    "Cache-Control",
+    "public, s-maxage=30, stale-while-revalidate=120"
+  );
+  return response;
 }
 
 export async function POST(request: Request) {

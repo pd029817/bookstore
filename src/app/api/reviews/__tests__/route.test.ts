@@ -19,6 +19,8 @@ function makeQueryBuilder(data: any, error: any = null) {
   builder.select = vi.fn(chain);
   builder.eq = vi.fn(chain);
   builder.order = vi.fn(chain);
+  builder.limit = vi.fn(chain);
+  builder.lt = vi.fn(chain);
   builder.insert = vi.fn(chain);
   builder.single = vi.fn().mockResolvedValue({ data, error });
   builder.then = (resolve: any) => resolve({ data, error });

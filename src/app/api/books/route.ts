@@ -81,5 +81,10 @@ export async function GET(request: NextRequest) {
       ? books[books.length - 1].created_at
       : null;
 
-  return NextResponse.json({ books, nextCursor });
+  const response = NextResponse.json({ books, nextCursor });
+  response.headers.set(
+    "Cache-Control",
+    "public, s-maxage=60, stale-while-revalidate=300"
+  );
+  return response;
 }

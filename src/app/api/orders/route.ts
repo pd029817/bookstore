@@ -47,16 +47,24 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Missing required fields" }, { status: 400 });
   }
 
-  // Verify stock and calculate total
+  // Verify stock and calculate total — batch query instead of N+1
+  const bookIds = items.map((item: { book_id: string }) => item.book_id);
+  const { data: books, error: booksError } = await supabase
+    .from("books")
+    .select("id, price, discount_price, stock, is_active")
+    .in("id", bookIds);
+
+  if (booksError) {
+    return NextResponse.json({ error: booksError.message }, { status: 500 });
+  }
+
+  const bookMap = new Map((books || []).map((b) => [b.id, b]));
+
   let totalAmount = 0;
   const orderItems: { book_id: string; quantity: number; price: number }[] = [];
 
   for (const item of items) {
-    const { data: book } = await supabase
-      .from("books")
-      .select("id, price, discount_price, stock, is_active")
-      .eq("id", item.book_id)
-      .single();
+    const book = bookMap.get(item.book_id);
 
     if (!book || !book.is_active) {
       return NextResponse.json({ error: `Book ${item.book_id} not available` }, { status: 400 });
@@ -102,28 +110,25 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: itemsError.message }, { status: 500 });
   }
 
-  // Decrement stock
-  for (const item of orderItems) {
-    const { data: currentBook } = await supabase
-      .from("books")
-      .select("stock")
-      .eq("id", item.book_id)
-      .single();
-    if (currentBook) {
-      await supabase
+  // Decrement stock — batch using bookMap from earlier query
+  await Promise.all(
+    orderItems.map((item) => {
+      const book = bookMap.get(item.book_id);
+      if (!book) return Promise.resolve();
+      return supabase
         .from("books")
-        .update({ stock: currentBook.stock - item.quantity })
+        .update({ stock: book.stock - item.quantity })
         .eq("id", item.book_id);
-    }
-  }
+    })
+  );
 
   // Clear cart items for ordered books
-  const bookIds = orderItems.map((item) => item.book_id);
+  const orderedBookIds = orderItems.map((item) => item.book_id);
   await supabase
     .from("cart_items")
     .delete()
     .eq("user_id", user.id)
-    .in("book_id", bookIds);
+    .in("book_id", orderedBookIds);
 
   return NextResponse.json({ order }, { status: 201 });
 }

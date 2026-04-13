@@ -29,5 +29,10 @@ export async function GET(
     .neq("id", id)
     .limit(6);
 
-  return NextResponse.json({ book, relatedBooks: relatedBooks || [] });
+  const response = NextResponse.json({ book, relatedBooks: relatedBooks || [] });
+  response.headers.set(
+    "Cache-Control",
+    "public, s-maxage=60, stale-while-revalidate=300"
+  );
+  return response;
 }
