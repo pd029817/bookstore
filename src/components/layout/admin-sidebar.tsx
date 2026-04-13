@@ -26,7 +26,7 @@ export function AdminSidebar() {
     <aside className="w-56 shrink-0 border-r border-sand bg-beige min-h-screen p-4">
       <Link href="/admin/dashboard" className="block mb-6">
         <span className="text-lg font-heading text-charcoal">
-          AIBook<span className="text-terracotta">Store</span>
+          Book<span className="text-terracotta">Shop</span>
         </span>
         <span className="block text-xs text-warm-brown">관리자</span>
       </Link>

@@ -25,7 +25,7 @@ export function Header({ categories = [] }: { categories?: Category[] }) {
         {/* Logo */}
         <Link href="/" className="shrink-0">
           <span className="text-xl font-heading text-charcoal">
-            AIBook<span className="text-terracotta">Store</span>
+            Book<span className="text-terracotta">Shop</span>
           </span>
         </Link>
 

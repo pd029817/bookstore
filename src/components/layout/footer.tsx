@@ -9,7 +9,7 @@ export function Footer({ categories = [] }: { categories?: Category[] }) {
           {/* Brand */}
           <div>
             <h3 className="text-lg font-heading text-charcoal mb-2">
-              AIBook<span className="text-terracotta">Store</span>
+              Book<span className="text-terracotta">Shop</span>
             </h3>
             <p className="font-accent text-warm-brown text-sm">
               &ldquo;책 한 권이 세상을 바꿀 수 있다고 믿습니다.&rdquo;
@@ -49,7 +49,7 @@ export function Footer({ categories = [] }: { categories?: Category[] }) {
         </div>
 
         <div className="mt-8 pt-6 border-t border-sand text-center text-sm text-warm-brown">
-          &copy; {new Date().getFullYear()} AIBookStore. All rights reserved.
+          &copy; {new Date().getFullYear()} BookShop. All rights reserved.
         </div>
       </div>
     </footer>
