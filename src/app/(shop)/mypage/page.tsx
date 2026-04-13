@@ -2,7 +2,7 @@
 
 import { useAuth } from "@/hooks/use-auth";
 import Link from "next/link";
-import { User, Package, MapPin } from "lucide-react";
+import { User, Package, MapPin, Star } from "lucide-react";
 import { maskEmail, maskName } from "@/lib/utils";
 
 export default function MyPage() {
@@ -47,6 +47,20 @@ export default function MyPage() {
           </div>
           <p className="text-sm text-warm-brown">
             주문 현황을 확인하고 배송을 추적하세요.
+          </p>
+        </Link>
+
+        {/* Reviews */}
+        <Link
+          href="/mypage/reviews"
+          className="border border-sand bg-beige rounded-sm p-6 hover:shadow-sm transition-shadow"
+        >
+          <div className="flex items-center gap-3 mb-4">
+            <Star className="w-5 h-5 text-terracotta" />
+            <h2 className="text-lg font-heading text-charcoal">내 리뷰</h2>
+          </div>
+          <p className="text-sm text-warm-brown">
+            구매한 도서에 리뷰를 작성하고 관리하세요.
           </p>
         </Link>
 

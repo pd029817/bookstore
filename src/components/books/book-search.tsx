@@ -6,6 +6,7 @@ import { Search, X } from "lucide-react";
 import { useDebounce } from "@/hooks/use-debounce";
 import type { Book } from "@/types/database";
 import { formatPrice } from "@/lib/utils";
+import Image from "next/image";
 
 export function BookSearch() {
   const router = useRouter();
@@ -85,7 +86,17 @@ export function BookSearch() {
               }}
               className="w-full flex items-center gap-3 px-4 py-3 hover:bg-cream transition-colors text-left"
             >
-              <div className="w-8 h-10 bg-sand/50 rounded-sm shrink-0" />
+              <div className="w-8 h-10 bg-sand/50 rounded-sm shrink-0 relative overflow-hidden">
+                {book.cover_image_url && (
+                  <Image
+                    src={book.cover_image_url}
+                    alt={book.title}
+                    fill
+                    sizes="32px"
+                    className="object-cover"
+                  />
+                )}
+              </div>
               <div className="min-w-0">
                 <p className="text-sm text-charcoal truncate">{book.title}</p>
                 <p className="text-xs text-warm-brown">

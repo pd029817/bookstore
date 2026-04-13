@@ -5,6 +5,7 @@ import { ReviewCard } from "./review-card";
 import { ReviewForm } from "./review-form";
 import { useAuth } from "@/hooks/use-auth";
 import { useToast } from "@/components/ui/toast";
+import { maskName } from "@/lib/utils";
 
 interface ReviewListProps {
   bookId: string;
@@ -19,11 +20,17 @@ interface ReviewData {
   user: { id: string; name: string } | null;
 }
 
+interface EligibleOrder {
+  order_id: string;
+  order_number: string;
+}
+
 export function ReviewList({ bookId }: ReviewListProps) {
   const { user } = useAuth();
   const { addToast } = useToast();
   const [reviews, setReviews] = useState<ReviewData[]>([]);
   const [loading, setLoading] = useState(true);
+  const [eligibleOrders, setEligibleOrders] = useState<EligibleOrder[]>([]);
 
   useEffect(() => {
     fetch(`/api/reviews?bookId=${bookId}`)
@@ -33,9 +40,55 @@ export function ReviewList({ bookId }: ReviewListProps) {
       .finally(() => setLoading(false));
   }, [bookId]);
 
-  async function handleSubmitReview(data: { rating: number; content: string }) {
-    // For now, we need an order_id. This will be enhanced to auto-detect eligible orders.
-    addToast("구매 확정된 주문이 있어야 리뷰를 작성할 수 있습니다.", "info");
+  // Fetch eligible orders when user is logged in
+  useEffect(() => {
+    if (!user) return;
+    fetch(`/api/reviews/eligible?bookId=${bookId}`)
+      .then((r) => r.json())
+      .then((data) => setEligibleOrders(data.orders || []))
+      .catch(() => setEligibleOrders([]));
+  }, [user, bookId]);
+
+  async function handleSubmitReview(data: {
+    rating: number;
+    content: string;
+    orderId: string;
+  }) {
+    const res = await fetch("/api/reviews", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        book_id: bookId,
+        order_id: data.orderId,
+        rating: data.rating,
+        content: data.content || null,
+      }),
+    });
+
+    if (!res.ok) {
+      const err = await res.json();
+      if (res.status === 409) {
+        addToast("이미 이 주문에 대한 리뷰를 작성하셨습니다.", "info");
+      } else {
+        addToast(err.error || "리뷰 작성에 실패했습니다.", "error");
+      }
+      return;
+    }
+
+    const { review } = await res.json();
+    // Mask the name client-side for immediate display
+    const maskedReview = {
+      ...review,
+      user: review.user
+        ? { ...review.user, name: maskName(review.user.name) }
+        : null,
+    };
+    setReviews((prev) => [maskedReview, ...prev]);
+    // Remove the used order from eligible list
+    setEligibleOrders((prev) =>
+      prev.filter((o) => o.order_id !== data.orderId)
+    );
+    addToast("리뷰가 등록되었습니다.", "success");
   }
 
   async function handleLike(reviewId: string) {
@@ -72,9 +125,10 @@ export function ReviewList({ bookId }: ReviewListProps) {
 
   return (
     <div className="space-y-4">
-      {user && (
+      {user && eligibleOrders.length > 0 && (
         <ReviewForm
           bookId={bookId}
+          eligibleOrders={eligibleOrders}
           onSubmit={handleSubmitReview}
         />
       )}
