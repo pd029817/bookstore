@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import { FeaturedBooks } from "@/components/books/featured-books";
+import { CherryBlossoms } from "@/components/cherry-blossoms";
 import type { Book } from "@/types/database";
 
 async function getFeaturedBooks(): Promise<Book[]> {
@@ -19,6 +20,7 @@ export default async function Home() {
 
   return (
     <main className="flex-1">
+      <CherryBlossoms />
       {/* Hero Section */}
       <section className="max-w-[1080px] mx-auto px-6 py-20 text-center">
         <p className="font-accent text-warm-brown text-lg mb-6">
